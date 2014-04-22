@@ -145,3 +145,7 @@ Set up public command line functions as stubs
 
 [implement] implement awk functions
 
+v 1.0 DEAD LINE 
+================
+
+**4-24**
