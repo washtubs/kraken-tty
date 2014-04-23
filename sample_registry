@@ -1,2 +1,5 @@
       44 X             /dev/pts/43                                                                                                                        tee
       22               /dev/pts/46             /tmp/tmp.HV5ZXN5zwk                                                                                        tee
+      45               /dev/pts/53             /tmp/tmp.cTRBuVwBl7                            derp                                                    w00tgrep "error"
+      46 X             /dev/pts/47             /tmp/tmp.cTRBuVwBl7                            derp                                                        grep "error"
+      47 X             /dev/pts/47             /tmp/tmp.cTRBuVwBl7                            derp                                                        grep "info"

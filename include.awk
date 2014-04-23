@@ -12,7 +12,7 @@ BEGIN{
         ALWAYS_EXTRACT_MAP=1
 
     field_lengths["id"]=8
-    field_lengths["open"]=2
+    field_lengths["locked"]=2
     field_lengths["tty"]=24
     field_lengths["log_file"]=32
     field_lengths["tty_cd"]=32
@@ -21,7 +21,7 @@ BEGIN{
     field_lengths["command_segment"]=0
 
     field_order[0]="id"
-    field_order[1]="open"
+    field_order[1]="locked"
     field_order[2]="tty"
     field_order[3]="log_file"
     field_order[4]="tty_cd"
@@ -46,48 +46,48 @@ function validate() {
         tty_cds[current_map["tty_cd"]]=1
     state = derive_state()
     if (state=="invalid")
-        print "Invalid state! "current_map["open"],current_map["tty"],
+        print "Invalid state! "current_map["locked"],current_map["tty"],
         current_map["log_file"],current_map["pid"],current_map["command_segment"]
 
     
 }
 
 # TODO update valid states in readme
-derive_state() {
+function derive_state() {
     if (ALWAYS_EXTRACT_MAP==0)
         extract_map()
     if (current_map["pid"]=="")
         in_use=0
     else
         in_use=1
-    if (current_map["open"]=="X")
-        open=1 #open
+    if (current_map["locked"]=="X")
+        locked=1 #locked
     else
-        open=0 #locked
+        locked=0 #locked
     if (current_map["command_segment"]!="" &&  # TODO: ensure validity as well
         current_map["tty"]!="" && # TODO: ensure validity as well
         current_map["log_file"]!="" && # TODO: ensure validity as well
-        !open) 
+        locked) 
         {
             state="ready"
             if (in_use)
                 state="running"
         }
     #for below checks, since it's not ready, it better not be in use
-    else if (!open && !in_use)
+    else if (locked && !in_use)
         state="locked" # but not ready
-    else if (open && !in_use)
-        state = "open" # but not ready
+    else if (!locked && !in_use)
+        state = "unlocked" # but not ready
     else 
         state="invalid"
     return state
 }
 
 function trim(str) {
-    #print "before "str
+    #print "before "str > "/dev/stderr"
     gsub(/^[ \t]*/,"",str)
     gsub(/[ \t]*$/,"",str)
-    #print "after  "str
+    #print "after  "str > "/dev/stderr"
     return str
 }
 
@@ -123,18 +123,42 @@ function extract_map() {
 function print_record(record_map) {
     for (i in field_order) {
         field_name=field_order[i]
-        printf ("%"field_lengths[field_name]"s",record_map[field_name])
+        if (field_name=="command_segment")
+        {
+            printf ("%s",record_map[field_name])
+        }
+        else
+        {
+            printf ("%"field_lengths[field_name]"s",record_map[field_name])
+        }
     }
     printf "\n"
 }
 
-function insert_record(map) {
+function print_current_record() {
+    for (i in field_order) {
+        field_name=field_order[i]
+        if (field_name=="command_segment")
+        {
+            printf ("%s",current_map[field_name])
+        }
+        else
+        {
+            printf ("%"field_lengths[field_name]"s",current_map[field_name])
+        }
+    }
+    printf "\n"
+}
+
+function insert(map) {
     if (!end)
         print "You may only insert records in the end block."
     else {
-        map["id"] = (max_id+1)%id_modulus
+        new_id = (max_id+1)%id_modulus
+        map["id"] = new_id
         print_record(map)
     }
+    return new_id
 }
 
 ALWAYS_EXTRACT_MAP{
