@@ -4,7 +4,7 @@ std_temp=$(mktemp)
 # Public Interface
 
 function register() {
-    awk '@include "include.awk"; {print_current_record()} END { map["locked"]=" "; map["tty"]="'"$TTY"'"; map["tty_cd"]="'"$TTY_CD"'"; print insert(map) ; }' $registry > $std_temp
+    echo "$((awk '@include "include.awk"; {print_current_record()} END { map["locked"]=" "; map["tty"]="'"$TTY"'"; map["tty_cd"]="'"$TTY_CD"'"; map["command_segment"]="tee"; print insert(map) > "/dev/stderr"; }' $registry 1> $std_temp) 2>&1)"
     mv $std_temp sample_registry
 }
 
@@ -59,6 +59,15 @@ function get() { #public update function
     elif [ ! -z "$TTY" ]
     then
         awk '@include "include.awk"; { if(current_map["tty"]=="'"$TTY"'") { printf current_map["'"$COLUMN"'"]; exit; } }' $registry
+    fi
+    
+}
+
+function get_all() { #public update function
+    COLUMN=$1
+    if [ ! -z "$ID" ]
+    then
+        awk '@include "include.awk"; { OFS=","; if(current_map["id"]=="'"$ID"'") { print current_map["id"], current_map["locked"], current_map["tty"], current_map["log_file"], current_map["tty_cd"], current_map["pid"], current_map["label"], current_map["command_segment"] } }' $registry
     fi
     
 }
@@ -182,6 +191,9 @@ then
 elif [ $command == "get" ]
 then
     get "$1" "$2" "$3"
+elif [ $command == "get-all" ]
+then
+    get_all "$1" "$2" "$3"
 elif [ $command == "set" ]
 then
     set_field "$1" "$2" "$3"
