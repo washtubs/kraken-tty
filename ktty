@@ -3,6 +3,8 @@ registry=sample_registry
 std_temp=$(mktemp)
 # Public Interface
 
+# TODO: make all functions return one line without trailing line feed
+
 function register() {
     echo "$((awk '@include "include.awk"; {print_current_record()} END { map["locked"]=" "; map["tty"]="'"$TTY"'"; map["tty_cd"]="'"$TTY_CD"'"; map["command_segment"]="tee"; print insert(map) > "/dev/stderr"; }' $registry 1> $std_temp) 2>&1)"
     mv $std_temp sample_registry
@@ -58,16 +60,16 @@ function get() { #public update function
         awk '@include "include.awk"; { if(current_map["id"]=="'"$ID"'") { printf current_map["'"$COLUMN"'"] } }' $registry
     elif [ ! -z "$TTY" ]
     then
-        awk '@include "include.awk"; { if(current_map["tty"]=="'"$TTY"'") { printf current_map["'"$COLUMN"'"]; exit; } }' $registry
+        awk '@include "include.awk"; { if(current_map["tty"]=="'"$TTY"'") { results=results""delim""current_map["'"$COLUMN"'"]; delim="," } } END{printf results }' $registry
     fi
     
 }
 
-function get_all() { #public update function
+function get_all() { #public update function  (includes state)
     COLUMN=$1
     if [ ! -z "$ID" ]
     then
-        awk '@include "include.awk"; { OFS=","; if(current_map["id"]=="'"$ID"'") { print current_map["id"], current_map["locked"], current_map["tty"], current_map["log_file"], current_map["tty_cd"], current_map["pid"], current_map["label"], current_map["command_segment"] } }' $registry
+        echo -n $(awk '@include "include.awk"; { OFS=","; if(current_map["id"]=="'"$ID"'") { print current_map["id"], current_map["locked"], current_map["tty"], current_map["log_file"], current_map["tty_cd"], current_map["pid"], current_map["label"], current_map["command_segment"], derive_state() } }' $registry)
     fi
     
 }
@@ -96,7 +98,8 @@ function set_field() { #public update function
         COLUMN="log_file" update
     elif [ $field == "code" ]
     then
-        COLUMN="tty_cd" update
+        #This should always be tty level logic
+        ID="" COLUMN="tty_cd" update
     elif [ $field == "command" ]
     then
         echo $VALUE
