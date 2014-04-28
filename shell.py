@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 from curses import *
 import readline
-import cmd
 import subprocess
 import os
 
-##### imported from other shell
+##### copy pasted from other shell
 
 setupterm("xterm")
 def get_string(*args):
@@ -134,82 +133,53 @@ def initialize():
     else: #gather these up
         register_new_ids()
 
+def build_prompt():
+    default_color=9
+    running_color=3
+    ready_color=2
+    locked_color=4
+    unlocked_color=5
+    invalid_color=6
 
-def hi(asd,gg,hfg,xcvx):
-    print( "hi")
-    return ["asd","fds"]
+    #start with the tty or alternatively tty_cd
+    for id in registry:
+        tty_cd = registry[id].tty_cd  
+        break #just get the first one as it should be the same for all
+    if tty_cd == "":
+        label = os.environ['TTY']
+    else:
+        label = tty_cd
+    if env() == "tty":
+        label = fs.push(["bold"]) + label + fs.pop()
+
+    id_list = "["
+    delim = ""
+    for id in registry:
+        color = ({
+        "running":running_color,
+        "ready":ready_color,
+        "locked":locked_color,
+        "unlocked":unlocked_color,
+        "invalid":invalid_color
+        }
+        [registry[id].state])
+        colored_id = fs.push(["setf",color]) + id + fs.pop()
+        if env() == id:
+            colored_id = fs.push(["bold"]) + colored_id + fs.pop()
+        id_list = id_list + delim + colored_id
+        delim = ", "
+    id_list = id_list + "]"
+    global prompt
+    prompt = label + " " + id_list + " » "
 
 initialize()
-#readline.set_completer(hi)
-#readline.set_completion_display_matches_hook(hi)
-#print readline.get_completer_delims()
-#print readline.get_completion_type()
+build_prompt()
 
-#readline.set_pre_input_hook(build_prompt)
-
-#cmd = cmd.Cmd()
-##cmd.preloop = build_prompt
-#cmd.prompt = prompt
-#cmd.complete_default = hi
-
-
-class Kttysh(cmd.Cmd):
-    def completedefault(self,text, line, begidx, endidx):
-        readline.redisplay()
-        select()
-        #print( "hi")
-        return []
-    def build_prompt(self):
-        print "hi"
-        default_color=9
-        running_color=3
-        ready_color=2
-        locked_color=4
-        unlocked_color=5
-        invalid_color=6
-
-        #start with the tty or alternatively tty_cd
-        for id in registry:
-            tty_cd = registry[id].tty_cd  
-            break #just get the first one as it should be the same for all
-        if tty_cd == "":
-            label = os.environ['TTY']
-        else:
-            label = tty_cd
-        if env() == "tty":
-            label = fs.push(["bold"]) + label + fs.pop()
-
-        id_list = "["
-        delim = ""
-        for id in registry:
-            color = ({
-            "running":running_color,
-            "ready":ready_color,
-            "locked":locked_color,
-            "unlocked":unlocked_color,
-            "invalid":invalid_color
-            }
-            [registry[id].state])
-            colored_id = fs.push(["setf",color]) + id + fs.pop()
-            if env() == id:
-                colored_id = fs.push(["bold"]) + colored_id + fs.pop()
-            id_list = id_list + delim + colored_id
-            delim = ", "
-        id_list = id_list + "]"
-        self.prompt = label + " " + id_list + " » "
-    def preloop(self):
-        prompt = self.build_prompt()
-
-kttysh = Kttysh()
-kttysh.cmdloop()
-
-readline.set_pre_input_hook(kttysh.build_prompt)
-
-#while True:
-    #line = raw_input(prompt)
-    #if line == 'stop':
-        #break
-    #print( ">>> " + line)
+while True:
+    line = raw_input(prompt)
+    if line == 'stop':
+        break
+    print( ">>> " + line)
 
     #post()
     # register_new_ids

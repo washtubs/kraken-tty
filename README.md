@@ -139,13 +139,23 @@ I'm thinking perl would be a good choice.
 TODO
 ====
 
-Set up public command line functions as stubs
+* Set up the shell simply. No hotkeys that cause the prompt to redraw or whatever
+* [Add New Functionality]: include the pid for the acting process (the process that is 
+writing to the temp file) in the registry. We can automatically (or manually) check 
+these processes, and when they are dead remove the temp file as well. Include another flag
+that says whether we can remove the temp file when the process terminates. Example use case.
 
-[proof of concept mode] figure out how to set up awk based api
+```bash
+alias peek= tee $(ktty mktemp --pid $THISPID) #not sure how that is gonna work
+cat | peek | grep blah | peek | awk '{print $2}'
+```
 
-[implement] implement awk functions
+The above command would tee that output to one of ktty's registered terminals.
+The temp file should be removed once this process terminates. Not sure how we will tell that
+though
+
 
 v 1.0 DEAD LINE 
 ================
 
-**4-24**
+~~**4-24**~~
